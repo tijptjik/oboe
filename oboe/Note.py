@@ -5,6 +5,7 @@ from oboe.format import (
     format_tags, format_blockrefs, format_highlights, format_links, format_code_blocks
 )
 from oboe.Link import Link
+from oboe import LOG
 
 
 class Note:
@@ -61,6 +62,9 @@ class Note:
     
     def html(self, pandoc=False):
         """Returns the note formatted as HTML. Will use markdown2 as default, with the option of pandoc (WIP)"""
+
+        LOG.debug(f"Converting {self.title} into HTML...")
+
         if pandoc:
             # Still WIP
             import pypandoc
@@ -72,6 +76,8 @@ class Note:
 
         # Wrapping converted markdown in a div for styling
         html = f"<div id=\"content\">{html}</div>"
+        
+        LOG.debug(f"{self.title} converted into HTML and placed inside div with id=\"content\"")
 
         return html
     

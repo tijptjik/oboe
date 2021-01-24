@@ -2,6 +2,7 @@ import os
 import regex as re
 from oboe.utils import slug_case, md_link, render_markdown, write
 from oboe.Note import Note
+from oboe import LOG
 
 
 class Vault:
@@ -47,20 +48,31 @@ class Vault:
                 stylesheet_abspath = os.path.join(os.path.dirname(self.html_template_path), stylesheet) 
                 # Check if the referenced stylesheet is local, and copy it to out_dir if it is
                 if os.path.isfile(stylesheet_abspath):
-                    print("Copying local stylesheet to the output directory") # TODO: Message system
+                    LOG.info("Copying stylesheet to the output directory...")
+
                     with open(stylesheet_abspath, encoding="utf-8") as f:
                         stylesheet_content = f.read()
                     write(stylesheet_content, os.path.join(out_dir, stylesheet))
+
+                    LOG.info("Copied local stylesheet into the output directory.")
                 
             # Use the supplied template on all notes
             for note in self.notes:
+                LOG.debug(f"Formatting {note.title} according to the supplied HTML template...")
+
                 html = self.html_template.format(title=note.title, content=note.html(), backlinks=note.backlink_html)
                 write(html, os.path.join(out_dir, note.filename_html))
+
+                LOG.debug(f"{note.title} written.")
         else:
             # Do not use a template, just output the content and a list of backlinks
             for note in self.notes:
+                LOG.debug(f"Exporting {note.title} without using a template.")
+
                 html = "{content}\n{backlinks}".format(content=note.html(), backlinks=note.backlink_html)
                 write(html, os.path.join(out_dir, note.filename_html))
+
+                LOG.debug(f"{note.title} written.")
 
 
     def _find_files(self, vault_root, extra_folders):
