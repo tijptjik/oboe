@@ -1,122 +1,130 @@
- def convert(self, text):
-        """Convert the given text."""
-        # Main function. The order in which other subs are called here is
-        # essential. Link and image substitutions need to happen before
-        # _EscapeSpecialChars(), so that any *'s or _'s in the <a>
-        # and <img> tags get encoded.
+import regex as re
 
-        # Clear the global hashes. If we don't clear these, you get conflicts
-        # from other articles when generating a page which contains more than
-        # one article (e.g. an index page that shows the N most recent
-        # articles):
-        self.reset()
+# Precompiled regexes
+whitespace_only_re = re.compile(r"^[ \t]+$", re.MULTILINE)
+code_block_re = re.compile(r"```(.*)$\n([\S\s]*?)\n```", re.MULTILINE)
+footnote_refs_re = re.compile(r"\[\^([\p{L}\p{N}_.-]+?)\](?!:)")
+footnote_inline_re = re.compile(r"\^\[(.*?)\]")
 
-        if not isinstance(text, unicode):
-            # TODO: perhaps shouldn't presume UTF-8 for string input?
-            text = unicode(text, 'utf-8')
+def convert(self, text):
+    """Convert the given text."""
 
-        if self.use_file_vars:
-            # Look for emacs-style file variable hints.
-            emacs_vars = self._get_emacs_vars(text)
-            if "markdown-extras" in emacs_vars:
-                splitter = re.compile("[ ,]+")
-                for e in splitter.split(emacs_vars["markdown-extras"]):
-                    if '=' in e:
-                        ename, earg = e.split('=', 1)
-                        try:
-                            earg = int(earg)
-                        except ValueError:
-                            pass
-                    else:
-                        ename, earg = e, None
-                    self.extras[ename] = earg
+    # Standardize line endings:
+    text = text.replace("\r\n", "\n")
+    text = text.replace("\r", "\n")
 
-        # Standardize line endings:
-        text = text.replace("\r\n", "\n")
-        text = text.replace("\r", "\n")
+    # Make sure text ends with a couple of newlines:
+    text += "\n\n"
 
-        # Make sure $text ends with a couple of newlines:
-        text += "\n\n"
+    # Convert all tabs to 4 spaces, as they should be
+    if "\t" in text:
+        detabbed = []
+        for line in text.splitlines():
+            if "\t" in line:
+                detabbed.append(detab_line(line))
+        text = "\n".join(detabbed)
 
-        # Convert all tabs to spaces.
-        text = self._detab(text)
+    # Strip any lines consisting only of spaces and tabs.
+    # This makes subsequent regexen easier to write, because we can
+    # match consecutive blank lines with /\n+/ instead of something
+    # contorted like /[ \t]*\n+/ .
+    text = whitespace_only_re.sub("", text)
+    
+    # Format code blocks
+    text = format_code_blocks(text)
 
-        # Strip any lines consisting only of spaces and tabs.
-        # This makes subsequent regexen easier to write, because we can
-        # match consecutive blank lines with /\n+/ instead of something
-        # contorted like /[ \t]*\n+/ .
-        text = self._ws_only_line_re.sub("", text)
+    # Format footnotes
+    text = format_footnotes(text)
 
-        # strip metadata from head and extract
-        if "metadata" in self.extras:
-            text = self._extract_metadata(text)
+    # TODO: Continue here!
+    text = self._strip_link_definitions(text)
 
-        text = self.preprocess(text)
+    text = self._run_block_gamut(text)
 
-        if "fenced-code-blocks" in self.extras and not self.safe_mode:
-            text = self._do_fenced_code_blocks(text)
+    if "footnotes" in self.extras:
+        text = self._add_footnotes(text)
 
-        if self.safe_mode:
-            text = self._hash_html_spans(text)
+    text = self.postprocess(text)
 
-        # Turn block-level HTML blocks into hash entries
-        text = self._hash_html_blocks(text, raw=True)
+    text = self._unescape_special_chars(text)
 
-        if "fenced-code-blocks" in self.extras and self.safe_mode:
-            text = self._do_fenced_code_blocks(text)
+    if self.safe_mode:
+        text = self._unhash_html_spans(text)
+        # return the removed text warning to its markdown.py compatible form
+        text = text.replace(self.html_removed_text, self.html_removed_text_compat)
 
-        # Because numbering references aren't links (yet?) then we can do everything associated with counters
-        # before we get started
-        if "numbering" in self.extras:
-            text = self._do_numbering(text)
+    do_target_blank_links = "target-blank-links" in self.extras
+    do_nofollow_links = "nofollow" in self.extras
 
-        # Strip link definitions, store in hashes.
-        if "footnotes" in self.extras:
-            # Must do footnotes first because an unlucky footnote defn
-            # looks like a link defn:
-            #   [^4]: this "looks like a link defn"
-            text = self._strip_footnote_definitions(text)
-        text = self._strip_link_definitions(text)
+    if do_target_blank_links and do_nofollow_links:
+        text = self._a_nofollow_or_blank_links.sub(r'<\1 rel="nofollow noopener" target="_blank"\2', text)
+    elif do_target_blank_links:
+        text = self._a_nofollow_or_blank_links.sub(r'<\1 rel="noopener" target="_blank"\2', text)
+    elif do_nofollow_links:
+        text = self._a_nofollow_or_blank_links.sub(r'<\1 rel="nofollow"\2', text)
 
-        text = self._run_block_gamut(text)
+    if "toc" in self.extras and self._toc:
+        self._toc_html = calculate_toc_html(self._toc)
 
-        if "footnotes" in self.extras:
-            text = self._add_footnotes(text)
+        # Prepend toc html to output
+        if self.cli:
+            text = '{}\n{}'.format(self._toc_html, text)
 
-        text = self.postprocess(text)
+    text += "\n"
 
-        text = self._unescape_special_chars(text)
+    # Attach attrs to output
+    rv = UnicodeWithAttrs(text)
 
-        if self.safe_mode:
-            text = self._unhash_html_spans(text)
-            # return the removed text warning to its markdown.py compatible form
-            text = text.replace(self.html_removed_text, self.html_removed_text_compat)
+    if "toc" in self.extras and self._toc:
+        rv.toc_html = self._toc_html
 
-        do_target_blank_links = "target-blank-links" in self.extras
-        do_nofollow_links = "nofollow" in self.extras
+    if "metadata" in self.extras:
+        rv.metadata = self.metadata
+    return rv
+    
 
-        if do_target_blank_links and do_nofollow_links:
-            text = self._a_nofollow_or_blank_links.sub(r'<\1 rel="nofollow noopener" target="_blank"\2', text)
-        elif do_target_blank_links:
-            text = self._a_nofollow_or_blank_links.sub(r'<\1 rel="noopener" target="_blank"\2', text)
-        elif do_nofollow_links:
-            text = self._a_nofollow_or_blank_links.sub(r'<\1 rel="nofollow"\2', text)
+def detab_line(line):
+    if "\t" not in line:
+        return line
+    chunk1, chunk2 = line.split("\t", 1)
+    chunk1 += (" " * (4 - len(chunk1) % 4))
+    return detab_line(chunk1 + chunk2)
 
-        if "toc" in self.extras and self._toc:
-            self._toc_html = calculate_toc_html(self._toc)
 
-            # Prepend toc html to output
-            if self.cli:
-                text = '{}\n{}'.format(self._toc_html, text)
+def format_code_blocks(text):
+    matches = code_block_re.finditer(text)
+    for match in matches:
+        # Format as plaintext if no language specified
+        lang = match.group(1) if match.group(1) else "plaintext"
+        text = text.replace(match.group(),
+                    f"<pre><code class=\"{lang} lang-{lang} language-{lang}\">{match.group(2)}</code></pre>")
+    return text
 
-        text += "\n"
 
-        # Attach attrs to output
-        rv = UnicodeWithAttrs(text)
+def format_footnotes(text):
+    footnote_html_section = ""
+    footnote_number = 1
+    # First find regular footnotes
+    footnote_refs = footnote_refs_re.finditer(text)
+    for ref in footnote_refs:
+        id = ref.group(1)
+        if f"[^{id}]:" in text:
+            regex = re.compile(f"^ {{0,3}}\\[\\^{id}\\]: ?((?:\\s*.*\\n+)(?:^ {{4}}\\s*.*$\\n*)*)", re.MULTILINE)  
+            footnote = regex.search(text)
+            text = text.replace(footnote.group(), "")
+            text = text.replace(ref.group(), f"<sup id=\"fn-{id}-ref\" class=\"footnote-ref\"><a href=\"#fn-{id}\" class=\"footnote-link\">[{footnote_number}]</a></sup>")
+            # Add footnotes as list element
+            footnote_html_section += f"<li id=\"fn-{id}\" class=\"footnote\">{footnote.group(1)}<a class=\"footnote-backref\" href=\"fn-{id}-ref\">↩︎</a></li>"
+            footnote_number += 1
+            
+    # Then find inline footnotes
+    footnote_refs = footnote_inline_re.finditer(text)
+    for ref in footnote_refs:
+        text = text.replace(ref.group(), f"<sup id=\"fn-{footnote_number}-ref\" class=\"footnote-ref\"><a href=\"#fn-{footnote_number}\" class=\"footnote-link\">[{footnote_number}]</a></sup>")
+        footnote_html_section += f"<li id=\"fn-{footnote_number}\" class=\"footnote\">{ref.group(1)}<a class=\"footnote-backref\" href=\"fn-{footnote_number}-ref\">↩︎</a></li>"
 
-        if "toc" in self.extras and self._toc:
-            rv.toc_html = self._toc_html
-
-        if "metadata" in self.extras:
-            rv.metadata = self.metadata
-        return rv
+    # Lastly add the footnote section at the end of the document
+    if footnote_html_section:
+        text += f"<section class=\"footnotes\"><hr>\n{footnote_html_section}\n</section>"
+        
+    return text
