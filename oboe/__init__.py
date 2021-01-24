@@ -3,6 +3,7 @@ import sys
 import argparse
 from .Vault import Vault
 from .Note import Note
+from .log import Logger
 
 def main():
     parser = argparse.ArgumentParser(
