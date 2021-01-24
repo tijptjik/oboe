@@ -53,6 +53,8 @@ Oboe supports only converting notes that contain a certain tag. The filter is sp
 
 - `-e` or `--add-file-extensions`: Most web-servers do not need the `.html` file extension in URLs to find the correct file. However, that might be needed when browsing the converted vault locally. If you experience issues with this or want all links to have a `.html` extension, just add this flag when running.
 
+- `-b`or `--omit-backlink-dash`: Removes the `- ` in front of the backlink when inserted in html.
+
 # Tips
 
 ## Publishing your vault automatically to GitHub Pages
