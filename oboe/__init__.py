@@ -53,7 +53,7 @@ def main():
         LOG.set_level(args.log_level)
 
     GLOBAL.HTML_LINK_EXTENSIONS = args.add_file_extensions
-    GLOBAL.BACKLINK_DASH = args.omit-backlink-dash
+    GLOBAL.BACKLINK_DASH = args.omit_backlink_dash
 
     vault = Vault(args.Vault, extra_folders=args.sub_directories, html_template=args.template, filter=args.filter)
     vault.export_html(args.output_directory)

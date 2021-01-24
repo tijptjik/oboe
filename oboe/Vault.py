@@ -3,6 +3,7 @@ import regex as re
 from oboe.utils import slug_case, md_link, render_markdown, write
 from oboe.Note import Note
 from oboe import LOG
+from oboe import GLOBAL
 
 
 class Vault:
@@ -31,7 +32,7 @@ class Vault:
                         self.notes[i].backlink_html += f"- {backlink.md_link()}\n"
                     else:
                         self.notes[i].backlink_html += f"{backlink.md_link()}\n"
-                        
+
                 self.notes[i].backlink_html += "</div>"
 
                 self.notes[i].backlink_html = render_markdown(self.notes[i].backlink_html)
