@@ -1,5 +1,5 @@
 import inspect
-import os
+import shutil
 
 
 LEVELS = {
@@ -92,6 +92,6 @@ def style(text, *styles):
     
 
 def right_align(text, left_align_len=0):
-    columns = int(os.popen('stty size', 'r').read().split()[1])
+    columns = shutil.get_terminal_size()[0]
     if left_align_len + len(text) < columns:
         return(text.rjust(columns))
