@@ -41,7 +41,7 @@ def format_code_blocks(document):
     matches = regex.finditer(document)
 
     for match in matches:
-        # Format as plaintext if not language specified
+        # Format as plaintext if no language specified
         lang = match.group(1) if match.group(1) else "plaintext"
         document = document.replace(match.group(),
                     f"<pre><code class=\"{lang} lang-{lang} language-{lang}\">{match.group(2)}</code></pre>")
