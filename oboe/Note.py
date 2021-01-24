@@ -28,11 +28,11 @@ class Note:
             
     def links_in_file(self):
         """Returns a list of all links in the note."""
-        matches = re.finditer(r"\[{2}(.*?)\]{2}", self.content)
+        matches = re.finditer(r"(!)?\[{2}(.*?)\]{2}", self.content)
 
         links = []
         for match in matches:
-            link = Link(match.group(1))
+            link = Link(match.group(2), embed=match.group(1))
             links.append(link)
 
         return links
