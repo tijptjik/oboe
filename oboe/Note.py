@@ -5,6 +5,7 @@ from oboe.format import (
     format_tags, format_blockrefs, format_highlights, format_links, format_code_blocks
 )
 from oboe.Link import Link
+from oboe import LOG
 
 
 class Note:

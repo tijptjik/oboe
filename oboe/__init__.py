@@ -5,6 +5,8 @@ from .Vault import Vault
 from .Note import Note
 from .log import Logger
 
+LOG = Logger("INFO")
+
 def main():
     parser = argparse.ArgumentParser(
         prog="oboe",

@@ -2,6 +2,7 @@ import regex as re
 import os
 import markdown2
 from oboe import GLOBAL
+from oboe import LOG
 
 
 def slug_case(text):

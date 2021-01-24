@@ -2,6 +2,7 @@ import os
 import regex as re
 from oboe.utils import slug_case, md_link, render_markdown, write
 from oboe.Note import Note
+from oboe import LOG
 
 
 class Vault:

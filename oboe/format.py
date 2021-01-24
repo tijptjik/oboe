@@ -1,5 +1,6 @@
 import regex as re
 from oboe.utils import slug_case, md_link
+from oboe import LOG
 
 
 def format_tags(document, tags):
