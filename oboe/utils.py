@@ -83,37 +83,3 @@ def render_markdown(text):
     ]
 
     return markdown2.markdown(text, extras=markdown2_extras)
-
-
-def style(text, *styles):
-    code = {
-        'red': '31',
-        'green': '32',
-        'yellow': '33',
-        'blue': '34',
-        'magenta': '35',
-        'cyan': '36',
-        'bright red': '91',
-        'bright green': '92',
-        'bright yellow': '93',
-        'bright blue': '94',
-        'bright magenta': '95',
-        'bright cyan': '96',
-        'bold': '1',
-        'faint': '2',
-        'italic': '3',
-        'underline': '4',
-        'blink': '5',
-        'strike': '9'
-    }
-
-    for style in styles:
-        text = "\033[" + code[style] + "m" + text + "\033[0m"
-
-    return text
-    
-
-def right_align(text, left_align_len=0):
-    columns = int(os.popen('stty size', 'r').read().split()[1])
-    if left_align_len + len(text) < columns:
-        return(text.rjust(columns))
