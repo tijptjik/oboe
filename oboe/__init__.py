@@ -4,6 +4,7 @@ LOG = Logger("INFO")
 
 import sys
 import argparse
+import time
 from .Vault import Vault
 from .Note import Note
 
@@ -55,5 +56,9 @@ def main():
     GLOBAL.HTML_LINK_EXTENSIONS = args.add_file_extensions
     GLOBAL.BACKLINK_DASH = args.omit_backlink_dash
 
+    time_begin = time.time()
     vault = Vault(args.Vault, extra_folders=args.sub_directories, html_template=args.template, filter=args.filter)
     vault.export_html(args.output_directory)
+    time_end = time.time()
+    
+    LOG.debug(f"Oboe used {round(time_end - time_begin, 2)}s to finish.")
