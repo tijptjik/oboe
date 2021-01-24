@@ -47,7 +47,7 @@ class Vault:
                 stylesheet_abspath = os.path.join(os.path.dirname(self.html_template_path), stylesheet) 
                 # Check if the referenced stylesheet is local, and copy it to out_dir if it is
                 if os.path.isfile(stylesheet_abspath):
-                    print("Copying local styleshit to the output directory") # TODO: Message system
+                    print("Copying local stylesheet to the output directory") # TODO: Message system
                     with open(stylesheet_abspath, encoding="utf-8") as f:
                         stylesheet_content = f.read()
                     write(stylesheet_content, os.path.join(out_dir, stylesheet))
