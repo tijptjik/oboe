@@ -8,7 +8,7 @@ LINK_SYNTAX = {
 }
 
 class Link:
-    def __init__(self, obsidian_link):
+    def __init__(self, obsidian_link, embed=None):
         self.obsidian_link = obsidian_link
         extended_link = re.match(r"([^#|^\n]+)([#|]\^?)(.*)", obsidian_link)
         if extended_link:
@@ -16,8 +16,16 @@ class Link:
             setattr(self, LINK_SYNTAX[extended_link.group(2)], extended_link.group(3))
         else:
             self.file = obsidian_link
+            
+        if embed:
+            # Is embed, run function to get the content of the link destination
+            self.content = self.get_content()
         
         self.slug = slug_case(self.file)
+        
+    def get_content(self):
+        """Gets the content residing at the link destination"""
+        pass
         
     def md_link(self):
         """Returns a link string that follows the Markdown specification"""
