@@ -4,6 +4,7 @@ LOG = Logger("INFO")
 
 import sys
 import argparse
+import time
 from .Vault import Vault
 from .Note import Note
 
@@ -43,11 +44,21 @@ def main():
                         default=None,
                         help="The level of Oboe's logger")
 
+    parser.add_argument("-b", "--omit-backlink-dash",
+                        action="store_false",
+                        help="Whether to remove a '- ' before each backlink in html.")
+
     args = parser.parse_args()
 
     if args.log_level:
         LOG.set_level(args.log_level)
 
     GLOBAL.HTML_LINK_EXTENSIONS = args.add_file_extensions
+    GLOBAL.BACKLINK_DASH = args.omit_backlink_dash
+
+    time_begin = time.time()
     vault = Vault(args.Vault, extra_folders=args.sub_directories, html_template=args.template, filter=args.filter)
     vault.export_html(args.output_directory)
+    time_end = time.time()
+    
+    LOG.debug(f"Oboe used {round(time_end - time_begin, 2)}s to finish.")
