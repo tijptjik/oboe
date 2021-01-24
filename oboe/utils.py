@@ -107,6 +107,12 @@ def style(text, *styles):
     }
 
     for style in styles:
-        text = "\033[" + code[stl] + "m" + text + "\033[0m"
+        text = "\033[" + code[style] + "m" + text + "\033[0m"
 
     return text
+    
+
+def right_align(text, left_align_len=0):
+    columns = int(os.popen('stty size', 'r').read().split()[1])
+    if left_align_len + len(text) < columns:
+        return(text.rjust(columns))
