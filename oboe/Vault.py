@@ -27,7 +27,11 @@ class Vault:
             if backlinks:
                 self.notes[i].backlink_html += "\n<div class=\"backlinks\" markdown=\"1\">\n"
                 for backlink in backlinks:
-                    self.notes[i].backlink_html += f"- {backlink.md_link()}\n"
+                    if GLOBAL.BACKLINK_DASH == True: #If user disabled backlinkdash, then save it without the dash!
+                        self.notes[i].backlink_html += f"- {backlink.md_link()}\n"
+                    else:
+                        self.notes[i].backlink_html += f"{backlink.md_link()}\n"
+                        
                 self.notes[i].backlink_html += "</div>"
 
                 self.notes[i].backlink_html = render_markdown(self.notes[i].backlink_html)
