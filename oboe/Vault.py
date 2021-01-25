@@ -7,14 +7,15 @@ from oboe import GLOBAL
 
 
 class Vault:
-    def __init__(self, vault_root, extra_folders=[], html_template=None, filter=[]):
+    def __init__(self, vault_root, extra_folders=[], html_template=None, filter=[], use_oboe_processor=False):
         self.vault_root = vault_root
         self.filter = filter
         self.notes = self._find_files(vault_root, extra_folders)
         self.extra_folders = extra_folders
+        self.use_oboe_processor = use_oboe_processor
         self._add_backlinks()
 
-        self.html_template_path = os.path.abspath(html_template)
+        self.html_template_path = os.path.abspath(html_template) if html_template else None
         if html_template:
             with open(html_template, "r", encoding="utf8") as f:
                 self.html_template = f.read()
@@ -46,7 +47,7 @@ class Vault:
             if not os.path.exists(os.path.join(out_dir, folder)):
                 os.makedirs(os.path.join(out_dir, folder))
                 
-        if self.html_template:
+        if self.html_template_path:
             stylesheets = re.findall('<link+.*rel="stylesheet"+.*href="(.+?)"', self.html_template)
             for stylesheet in stylesheets:
                 # Check if template contains reference to a stylesheet
@@ -65,7 +66,7 @@ class Vault:
             for note in self.notes:
                 LOG.debug(f"Formatting {note.title} according to the supplied HTML template...")
 
-                html = self.html_template.format(title=note.title, content=note.html(), backlinks=note.backlink_html)
+                html = self.html_template.format(title=note.title, content=note.html(oboe=self.use_oboe_processor), backlinks=note.backlink_html)
                 write(html, os.path.join(out_dir, note.filename_html))
 
                 LOG.debug(f"{note.title} written.")
@@ -74,7 +75,7 @@ class Vault:
             for note in self.notes:
                 LOG.debug(f"Exporting {note.title} without using a template.")
 
-                html = "{content}\n{backlinks}".format(content=note.html(), backlinks=note.backlink_html)
+                html = "{content}\n{backlinks}".format(content=note.html(oboe=self.use_oboe_processor), backlinks=note.backlink_html)
                 write(html, os.path.join(out_dir, note.filename_html))
 
                 LOG.debug(f"{note.title} written.")

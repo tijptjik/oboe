@@ -60,17 +60,14 @@ class Note:
         self.content = format_blockrefs(self.content)
         self.content = format_highlights(self.content)
     
-    def html(self, pandoc=False):
-        """Returns the note formatted as HTML. Will use markdown2 as default, with the option of pandoc (WIP)"""
+    def html(self, oboe=False):
+        """Returns the note formatted as HTML. Will use markdown2 as default, with the option of my own processor (WIP)"""
 
         LOG.debug(f"Converting {self.title} into HTML...")
 
-        if pandoc:
-            # Still WIP
-            import pypandoc
-            filters = ['pandoc-xnos']
-            args = []
-            html = pypandoc.convert_text(self.content, 'html', format='md', filters=filters, extra_args=args)
+        if oboe:
+            from oboe.markdown import convert
+            html = convert(self.content)
         else:
             html = render_markdown(self.content)
 

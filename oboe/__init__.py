@@ -47,6 +47,9 @@ def main():
     parser.add_argument("-b", "--omit-backlink-dash",
                         action="store_false",
                         help="Whether to remove a '- ' before each backlink in html.")
+    
+    parser.add_argument("--use-oboe-processor",
+                        action="store_true", help="Whether to use Oboe's own Markdown processor")
 
     args = parser.parse_args()
 
@@ -57,7 +60,7 @@ def main():
     GLOBAL.BACKLINK_DASH = args.omit_backlink_dash
 
     time_begin = time.time()
-    vault = Vault(args.Vault, extra_folders=args.sub_directories, html_template=args.template, filter=args.filter)
+    vault = Vault(args.Vault, extra_folders=args.sub_directories, html_template=args.template, filter=args.filter, use_oboe_processor=args.use_oboe_processor)
     vault.export_html(args.output_directory)
     time_end = time.time()
     

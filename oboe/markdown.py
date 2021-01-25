@@ -1,19 +1,27 @@
 import regex as re
+from hashlib import sha256
+from random import randint
 from oboe.utils import slug_case
 
+
+SALT = bytes(randint(0, 1000000))
+def hash_text(text):
+    return "md5-" + sha256(SALT + text.encode("utf-8")).hexdigest()[32:]
+escape_table = dict([(ch, hash_text(ch)) for ch in '\\`*_{}[]()>#+-.!'])
 
 # Precompiled regexes
 whitespace_only_re = re.compile(r"^[ \t]+$", re.MULTILINE)
 fenced_code_block_re = re.compile(r"```(.*)$\n([\S\s]*?)\n```", re.MULTILINE)
 footnote_refs_re = re.compile(r"\[\^([\p{L}\p{N}_.-]+?)\](?!:)")
 footnote_inline_re = re.compile(r"\^\[(.*?)\]")
-link_def_re = re.compile(
-    r"""^[ ]{0,3}\[(.+)\]:[ \t]*\n?[ \t]*<?(.+?)>?[ \t]*(?:\n?[ \t]*(?<=\s)['"(]([^\n]*)['")][ \t]*)?(?:\n+|\Z)""", re.M | re.U
-)
+link_def_re = re.compile(r"""^[ ]{0,3}\[(.+)\]:[ \t]*\n?[ \t]*<?(.+?)>?[ \t]*(?:\n?[ \t]*(?<=\s)['"(]([^\n]*)['")][ \t]*)?(?:\n+|\Z)""", re.M | re.U)
 header_re = re.compile(r"(^(.+)[ \t]*\n(=+|-+)[ \t]*\n+)|(^(\#{1,6})[ \t]+(.+?)[ \t]*(?<!\\)\#*\n+)", re.M)
+code_span_re = re.compile(r"(?<!\\)(`+)(?!`)(.+?)(?<!`)\1(?!`)", re.S)
+html_token_re = re.compile(r"""(</?(?:\w+)(?:\s+(?:[\w-]+:)?[\w-]+=(?:".*?"|'.*?'))*\s*/?>|<\w+[^>]*>|<!--.*?-->|<\?.*?\?>)""")
+inline_link_re = re.compile(r"""\[(.*?)\]\((.*?) ?(?:"(.*?)")?\)""")
 
 
-def convert(self, text):
+def convert(text):
     """Convert the given text."""
 
     # Standardize line endings:
@@ -31,11 +39,10 @@ def convert(self, text):
                 detabbed.append(detab_line(line))
         text = "\n".join(detabbed)
 
-    # Strip any lines consisting only of spaces and tabs.
-    # This makes subsequent regexen easier to write, because we can
-    # match consecutive blank lines with /\n+/ instead of something
-    # contorted like /[ \t]*\n+/ .
+    # Strip any lines consisting only of spaces and tabs, to simplify regexes.
     text = whitespace_only_re.sub("", text)
+    
+    # TODO: Metadata
     
     # Format fenced code blocks
     text = format_fenced_code_blocks(text)
@@ -49,49 +56,39 @@ def convert(self, text):
     # Format all headers
     text = format_headers(text)
 
-    # TODO: Continue here!
-    text = self._run_block_gamut(text)
+    # Format inline code
+    text = format_inline_code(text)
 
-    if "footnotes" in self.extras:
-        text = self._add_footnotes(text)
+    # Escape some Markdown characters that are present inside HTML tags, to avoid converting them
+    text = escape_markdown_in_html(text)
 
-    text = self.postprocess(text)
+    # Format inline links
+    text = format_inline_links(text)
 
-    text = self._unescape_special_chars(text)
+    # Format automatic links
+    text = format_automatic_links(text)
+    
+    # text = self._encode_amps_and_angles(text)
 
-    if self.safe_mode:
-        text = self._unhash_html_spans(text)
-        # return the removed text warning to its markdown.py compatible form
-        text = text.replace(self.html_removed_text, self.html_removed_text_compat)
+    # if "strike" in self.extras:
+    #     text = self._do_strike(text)
 
-    do_target_blank_links = "target-blank-links" in self.extras
-    do_nofollow_links = "nofollow" in self.extras
+    # if "underline" in self.extras:
+    #     text = self._do_underline(text)
 
-    if do_target_blank_links and do_nofollow_links:
-        text = self._a_nofollow_or_blank_links.sub(r'<\1 rel="nofollow noopener" target="_blank"\2', text)
-    elif do_target_blank_links:
-        text = self._a_nofollow_or_blank_links.sub(r'<\1 rel="noopener" target="_blank"\2', text)
-    elif do_nofollow_links:
-        text = self._a_nofollow_or_blank_links.sub(r'<\1 rel="nofollow"\2', text)
+    # text = self._do_italics_and_bold(text)
 
-    if "toc" in self.extras and self._toc:
-        self._toc_html = calculate_toc_html(self._toc)
+    # # Do hard breaks:
+    # text = re.sub(r" *\n", "<br%s\n" % self.empty_element_suffix, text)
 
-        # Prepend toc html to output
-        if self.cli:
-            text = '{}\n{}'.format(self._toc_html, text)
+    # text = self._unescape_special_chars(text)
 
     text += "\n"
 
-    # Attach attrs to output
-    rv = UnicodeWithAttrs(text)
+    # # Attach attrs to output
+    # rv = UnicodeWithAttrs(text)
 
-    if "toc" in self.extras and self._toc:
-        rv.toc_html = self._toc_html
-
-    if "metadata" in self.extras:
-        rv.metadata = self.metadata
-    return rv
+    return text
     
 
 def detab_line(line):
@@ -163,5 +160,48 @@ def format_headers(text):
             header_text = match.group(6)
             
         id = slug_case(header_text)
-        header_html = header_text
-        text.replace(match.group(), f"<h{header_level} id=\"{id}\">{header_html}</h{header_level}>")
+        header_html = format_span(header_text)
+        text = text.replace(match.group(), f"<h{header_level} id=\"{id}\">{header_html}</h{header_level}>\n")
+        
+    return text
+
+
+def format_inline_code(text):
+    matches = code_span_re.finditer(text)
+    for match in matches:
+        code = match.group(2).strip(" \t")
+        replacements = [("&", "&amp;"), ("<", "&lt;"), (">", "&gt;")]
+        for before, after in replacements:
+            code = code.replace(before, after)
+        text = text.replace(match.group(), f"<code>{code}</code>")
+    
+    return text
+
+
+def escape_markdown_in_html(text):
+    escaped = []; in_html = False
+    for part in html_token_re.split(text):
+        if in_html:
+            escaped.append(part.replace('*', escape_table['*']).replace('_', escape_table['_']))
+        else:
+            for char, escape in escape_table.items():
+                part = part.replace("\\" + char, escape)
+            escaped.append(part)
+        in_html = not in_html
+    return ''.join(escaped)
+
+
+def format_inline_links(text):
+    matches = inline_link_re.finditer(text)
+    for match in matches:
+        link_text = match.group(1)
+        link_destination = match.group(2)
+        link_title = match.group(3)
+        attrs = " ".join([f"href=\"{link_destination}\"", f"title=\"{link_title}\"" if link_title else ""])
+        text = text.replace(match.group(), f"<a {attrs}>{link_text}</a>")
+        
+    return text
+
+def format_automatic_links(text):
+    # TODO: Not a priority yet, but should get implemented soon
+    return text
