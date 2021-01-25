@@ -10,12 +10,13 @@ def hash_text(text):
 escape_table = dict([(ch, hash_text(ch)) for ch in '\\`*_{}[]()>#+-.!'])
 
 # Precompiled regexes
-whitespace_only_re = re.compile(r"^[ \t]+$", re.MULTILINE)
-fenced_code_block_re = re.compile(r"```(.*)$\n([\S\s]*?)\n```", re.MULTILINE)
+whitespace_only_re = re.compile(r"^[ \t]+$", re.M)
+fenced_code_block_re = re.compile(r"```(.*)$\n([\S\s]*?)\n```", re.M)
 footnote_refs_re = re.compile(r"\[\^([\p{L}\p{N}_.-]+?)\](?!:)")
 footnote_inline_re = re.compile(r"\^\[(.*?)\]")
 link_def_re = re.compile(r"""^[ ]{0,3}\[(.+)\]:[ \t]*\n?[ \t]*<?(.+?)>?[ \t]*(?:\n?[ \t]*(?<=\s)['"(]([^\n]*)['")][ \t]*)?(?:\n+|\Z)""", re.M | re.U)
 header_re = re.compile(r"(^(.+)[ \t]*\n(=+|-+)[ \t]*\n+)|(^(\#{1,6})[ \t]+(.+?)[ \t]*(?<!\\)\#*\n+)", re.M)
+hr_re = re.compile(r"^[ ]{0,3}([-_*][ ]{0,2}){3,}$", re.M)
 code_span_re = re.compile(r"(?<!\\)(`+)(?!`)(.+?)(?<!`)\1(?!`)", re.S)
 html_token_re = re.compile(r"""(</?(?:\w+)(?:\s+(?:[\w-]+:)?[\w-]+=(?:".*?"|'.*?'))*\s*/?>|<\w+[^>]*>|<!--.*?-->|<\?.*?\?>)""")
 inline_link_re = re.compile(r"""\[(.*?)\]\((.*?) ?(?:"(.*?)")?\)""")
@@ -55,6 +56,12 @@ def convert(text):
 
     # Format all headers
     text = format_headers(text)
+    
+    # Format horisontal rules
+    text = format_hr(text)
+    
+    # Format lists
+    text = format_lists(text)
 
     # Format inline code
     text = format_inline_code(text)
@@ -164,6 +171,17 @@ def format_headers(text):
         text = text.replace(match.group(), f"<h{header_level} id=\"{id}\">{header_html}</h{header_level}>\n")
         
     return text
+
+
+def format_hr(text):
+    matches = hr_re.finditer(text)
+    for match in matches:
+        text = text.replace(match.group(), "\n<hr>\n")
+    return text
+
+
+def format_lists(text):
+    pass
 
 
 def format_inline_code(text):
