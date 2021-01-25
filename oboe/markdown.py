@@ -159,9 +159,9 @@ def format_headers(text):
             header_level = {"=": 1, "-": 2}[match.group(3)[0]]
             header_text = match.group(2)
         else:
-            n = len(match.group(5))
+            header_level = len(match.group(5))
             header_text = match.group(6)
             
         id = slug_case(header_text)
         header_html = header_text
-        text.replace(match.group(), f"<h{n} id=\"{id}\">{header_html}</h{n}>")
+        text.replace(match.group(), f"<h{header_level} id=\"{id}\">{header_html}</h{header_level}>")
