@@ -14,8 +14,8 @@ class Vault:
         self.extra_folders = extra_folders
         self._add_backlinks()
 
-        self.html_template_path = os.path.abspath(html_template)
         if html_template:
+            self.html_template_path = os.path.abspath(html_template)
             with open(html_template, "r", encoding="utf8") as f:
                 self.html_template = f.read()
 
@@ -46,7 +46,7 @@ class Vault:
             if not os.path.exists(os.path.join(out_dir, folder)):
                 os.makedirs(os.path.join(out_dir, folder))
                 
-        if self.html_template:
+        if hasattr(self, "html_template"):
             stylesheets = re.findall('<link+.*rel="stylesheet"+.*href="(.+?)"', self.html_template)
             for stylesheet in stylesheets:
                 # Check if template contains reference to a stylesheet
