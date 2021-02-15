@@ -1,4 +1,4 @@
-<div align="center"><b>NOTE</b>: <code>obsidian-html</code> has been renamed to <code>oboe</code> in order to gradually decouple it from Obsidian. Apologies for the inconveniences this may cause. If you've already installed <code>obsidian-html</code>, you can uninstall it and follow the <a href="#installation">installation instructions</a> for <code>oboe</code> below. Be sure to also update your GitHub Actions.</div>
+<div align="center"><sup><b>NOTE</b>: <code>obsidian-html</code> has been renamed to <code>oboe</code> in order to gradually decouple it from Obsidian. Apologies for the inconveniences this may cause. If you've already installed <code>obsidian-html</code>, you can uninstall it and follow the <a href="#installation">installation instructions</a> for <code>oboe</code> below. Be sure to also update your GitHub Actions.</sup></div>
 
 <br>
 
