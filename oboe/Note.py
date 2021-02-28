@@ -7,6 +7,7 @@ from oboe.format import (
 from oboe.Link import Link
 from oboe import LOG
 from oboe import GLOBAL
+import copy
 
 
 class Note:
@@ -47,9 +48,16 @@ class Note:
         for other in others:
             if self == other: continue
             if self.link in other.links:
-                backlinks.append(other.link)
+                try:
+                    rel = os.path.relpath(other.savepath, self.rel_dir)
+                    print(rel)
+                except:
+                    continue
+                rel = rel[:-5]
+                md_link = "[" + other.title + "](" + rel + (".html" if GLOBAL.HTML_LINK_EXTENSIONS else "") + ")"
+                backlinks.append(md_link)
 
-        backlinks = sorted(backlinks, key=lambda link: link.file)
+        backlinks = sorted(backlinks)
 
         return backlinks
     

@@ -20,7 +20,6 @@ class Link:
 
             setattr(self, LINK_SYNTAX[extended_link.group(2)], extended_link.group(3))
         else:
-            # Need to get the relative path to this file
             self.file = obsidian_link
             
         if embed:
@@ -30,10 +29,9 @@ class Link:
         self.slug = slug_case(self.file)
         #Add inn the full outpath
         self.slugpath = False
-        for dirpath, dirnames, filenames in os.walk(GLOBAL.VAULT_ROOT):
+        for dirpath, _dirnames, filenames in os.walk(GLOBAL.VAULT_ROOT):
             for filename in filenames:
                 if self.file+".md" == filename:
-                    #print(self.slug)
                     try: #If cur_path is empty, the os.path.relpath will panic...
                         self.slugpath = os.path.join(os.path.relpath(dirpath[len(GLOBAL.VAULT_ROOT)+1:], cur_path), self.slug )
                     except:
