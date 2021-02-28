@@ -1,3 +1,6 @@
 class GLOBAL:
     HTML_LINK_EXTENSIONS = False
     BACKLINK_DASH = True
+    VAULT_ROOT = ""
+    OUTPUT_DIR = ""
+    STYLESHEETS = []

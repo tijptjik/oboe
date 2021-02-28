@@ -6,6 +6,7 @@ from oboe.format import (
 )
 from oboe.Link import Link
 from oboe import LOG
+from oboe import GLOBAL
 
 
 class Note:
@@ -17,7 +18,7 @@ class Note:
         self.rel_dir = rel_dir
         self.savepath = os.path.join(rel_dir, self.filename_html)
         self.is_extra_dir = is_extra_dir
-        self.link = Link(self.title)
+        self.link = Link(self.title, self.rel_dir)
 
         with open(path, encoding="utf8") as f:
             self.content = f.read()
@@ -35,8 +36,7 @@ class Note:
 
         links = []
         for match in matches:
-            link = Link(match.group(2), embed=match.group(1))
-            print(str(link.md_link()))
+            link = Link(match.group(2), self.rel_dir, embed=match.group(1))
             links.append(link)
         
         return links
@@ -79,6 +79,8 @@ class Note:
 
         # Wrapping converted markdown in a div for styling
         html = f"<div id=\"content\">{html}</div>"
+
+        
         
         LOG.debug(f"{self.title} converted into HTML and placed inside div with id=\"content\"")
 

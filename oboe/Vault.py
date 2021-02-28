@@ -36,12 +36,15 @@ class Vault:
             # Make temporary list of all notes except current note in loop
             others = [other for other in self.notes if other != note]
             backlinks = self.notes[i].find_backlinks(others)
+            #print("BACKLINKS: " + str(backlinks))
             if backlinks:
                 self.notes[i].backlink_html += "\n<div class=\"backlinks\" markdown=\"1\">\n"
                 for backlink in backlinks:
                     if GLOBAL.BACKLINK_DASH == True: #If user disabled backlinkdash, then save it without the dash!
+                        
                         self.notes[i].backlink_html += f"- {backlink.md_link()}\n"
                     else:
+                        #print("md_link: " + str(backlink.md_link()))
                         self.notes[i].backlink_html += f"{backlink.md_link()}\n"
 
                 self.notes[i].backlink_html += "</div>"
@@ -64,6 +67,7 @@ class Vault:
                 stylesheet_abspath = os.path.join(os.path.dirname(self.html_template_path), stylesheet) 
                 # Check if the referenced stylesheet is local, and copy it to out_dir if it is
                 if os.path.isfile(stylesheet_abspath):
+                    GLOBAL.STYLESHEETS.append(stylesheet)
                     LOG.info("Copying stylesheet to the output directory...")
 
                     with open(stylesheet_abspath, encoding="utf-8") as f:
@@ -77,6 +81,15 @@ class Vault:
                 LOG.debug(f"Formatting {note.title} according to the supplied HTML template...")
 
                 html = self.html_template.format(title=note.title, content=note.html(), backlinks=note.backlink_html)
+                # If the file has a rel_dir (i.e. is in a different folder than root), we need to adjust the stylesheet path
+                if note.rel_dir:
+                    for sh in GLOBAL.STYLESHEETS:
+                        sch_string = 'href="' + sh + '">'
+                        sh_relpath = os.path.join(os.path.relpath(GLOBAL.OUTPUT_DIR, note.savepath), sh)
+                        replace_string = 'href="' + sh_relpath + '">'
+                        html = html.replace(sch_string, replace_string)
+
+
                 savepath = os.path.join(out_dir,note.savepath)
                 write(html, savepath)
 

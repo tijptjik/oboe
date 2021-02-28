@@ -55,6 +55,8 @@ def main():
 
     GLOBAL.HTML_LINK_EXTENSIONS = args.add_file_extensions
     GLOBAL.BACKLINK_DASH = args.omit_backlink_dash
+    GLOBAL.VAULT_ROOT = args.Vault
+    GLOBAL.OUTPUT_DIR = args.output_directory
 
     time_begin = time.time()
     
