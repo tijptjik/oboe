@@ -9,11 +9,13 @@ from oboe import LOG
 
 
 class Note:
-    def __init__(self, path, is_extra_dir = False):
+    def __init__(self, path, is_extra_dir = False, rel_dir = ''):
         self.path = path
         self.filename = os.path.split(path)[-1]
         self.title = self.filename.replace(".md", "")
         self.filename_html = slug_case(self.title) + ".html"
+        self.rel_dir = rel_dir
+        self.savepath = os.path.join(rel_dir, self.filename_html)
         self.is_extra_dir = is_extra_dir
         self.link = Link(self.title)
 
@@ -34,8 +36,9 @@ class Note:
         links = []
         for match in matches:
             link = Link(match.group(2), embed=match.group(1))
+            print(str(link.md_link()))
             links.append(link)
-
+        
         return links
     
     def find_backlinks(self, others):

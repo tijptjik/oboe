@@ -12,10 +12,13 @@ class Link:
     def __init__(self, obsidian_link, embed=None):
         self.obsidian_link = obsidian_link
         extended_link = re.match(r"([^#|^\n]+)([#|]\^?)(.*)", obsidian_link)
+        
         if extended_link:
             self.file = extended_link.group(1)
+            print("EXT_LINK: " + str(self.file))
             setattr(self, LINK_SYNTAX[extended_link.group(2)], extended_link.group(3))
         else:
+            # Need to get the relative path to this file
             self.file = obsidian_link
             
         if embed:
@@ -23,6 +26,7 @@ class Link:
             self.content = self.get_content()
         
         self.slug = slug_case(self.file)
+        #print(vault.notes[0])
         
     def get_content(self):
         """Gets the content residing at the link destination"""

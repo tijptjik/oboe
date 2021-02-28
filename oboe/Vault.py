@@ -10,14 +10,25 @@ class Vault:
     def __init__(self, vault_root, extra_folders=[], html_template=None, filter=[]):
         self.vault_root = vault_root
         self.filter = filter
-        self.notes = self._find_files(vault_root, extra_folders)
         self.extra_folders = extra_folders
+
+        # If all folders are to be added
+        if extra_folders[0] == "all":
+            self.extra_folders = [] # remove the all statement, wich would have become a nonexisting folder.
+            for dirpath, _dirnames, _filenames in os.walk(vault_root):
+                dirpath = dirpath[len(self.vault_root):] #Slicing off the root folder part
+                self.extra_folders.append(dirpath)
+
+        self.notes = self._find_files(vault_root, self.extra_folders)
+        
         self._add_backlinks()
 
         if html_template:
             self.html_template_path = os.path.abspath(html_template)
             with open(html_template, "r", encoding="utf8") as f:
                 self.html_template = f.read()
+        
+        
 
 
     def _add_backlinks(self):
@@ -39,12 +50,12 @@ class Vault:
 
 
     def export_html(self, out_dir):
-        # Ensure out_dir exists, as well as its sub-folders.
+        # Ensure out_dir exists, as well as all extra folders.
         if not os.path.exists(out_dir):
             os.makedirs(out_dir)
         for folder in self.extra_folders:
-            if not os.path.exists(os.path.join(out_dir, folder)):
-                os.makedirs(os.path.join(out_dir, folder))
+            if not os.path.exists(out_dir + folder):
+                os.makedirs(out_dir + folder)
                 
         if hasattr(self, "html_template"):
             stylesheets = re.findall('<link+.*rel="stylesheet"+.*href="(.+?)"', self.html_template)
@@ -66,7 +77,8 @@ class Vault:
                 LOG.debug(f"Formatting {note.title} according to the supplied HTML template...")
 
                 html = self.html_template.format(title=note.title, content=note.html(), backlinks=note.backlink_html)
-                write(html, os.path.join(out_dir, note.filename_html))
+                savepath = os.path.join(out_dir,note.savepath)
+                write(html, savepath)
 
                 LOG.debug(f"{note.title} written.")
         else:
@@ -81,24 +93,22 @@ class Vault:
 
 
     def _find_files(self, vault_root, extra_folders):
-        # Find all markdown-files in vault root.
-        md_files = self._find_md_files(vault_root)
-
-        # Find all markdown-files in each extra folder.
+        md_files = []
+        # Find all markdown-files.
         for folder in extra_folders:
-            md_files += self._find_md_files(os.path.join(vault_root, folder), is_extra_dir=True)
+            md_files += self._find_md_files(vault_root + folder, is_extra_dir=True)
 
         return md_files
 
 
-    def _find_md_files(self, root, is_extra_dir=False):
+    def _find_md_files(self, folder, is_extra_dir=False):
         md_files = []
-        for md_file in os.listdir(root):
-            # Check if the element in 'root' has the extension .md and is indeeed a file
-            if not (md_file.endswith(".md") and os.path.isfile(os.path.join(root, md_file))):
+        for md_file in os.listdir(folder):
+            # Check if the element in 'folder' has the extension .md and is indeed a file
+            if not (md_file.endswith(".md") and os.path.isfile(os.path.join(folder, md_file))):
                 continue
-            
-            note = Note(os.path.join(root, md_file), is_extra_dir=is_extra_dir)
+
+            note = Note(os.path.join(folder, md_file), is_extra_dir=is_extra_dir, rel_dir=folder[len(self.vault_root)+1:]) #+1 removes the first / in the path, allowing os.path.join to work
             
             # Filter tags
             if self.filter:

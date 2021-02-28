@@ -57,6 +57,7 @@ def main():
     GLOBAL.BACKLINK_DASH = args.omit_backlink_dash
 
     time_begin = time.time()
+    
     vault = Vault(args.Vault, extra_folders=args.sub_directories, html_template=args.template, filter=args.filter)
     vault.export_html(args.output_directory)
     time_end = time.time()
