@@ -7,7 +7,7 @@
 <p align="center">
   <a href="#installation">Installation</a> -
   <a href="#usage">Usage</a> -
-  <a href="#tips">Tips</a> 
+  <a href="#tips">Tips</a>
 </p>
 
 Oboe is a Python command line tool made to convert an [Obsidian](https://obsidian.md/) vault into a vault of HTML files, with the goal of publishing them as static files. It depends on the excellent [markdown2](https://github.com/trentm/python-markdown2) by [trentm](https://github.com/trentm) for Markdown parsing, but also deals with parsing Obsidian's flavor of Markdown. In addition, Oboe handles the structure of your vault and supports templates.
@@ -19,20 +19,20 @@ Oboe is a Python command line tool made to convert an [Obsidian](https://obsidia
 
 # Usage
 
-Supply the path to an Obsidian vault, and Oboe will convert all its notes into HTML, appended by the notes' backlinks. 
+Supply the path to an Obsidian vault, and Oboe will convert all its notes into HTML, appended by the notes' backlinks.
 
     oboe <path to vault>
 
 These HTML-files are by default placed in the directory `./html`. To specify another output directory, use the flag `-o` or `--output-directory`.
 
     oboe <path to vault> -o <output directory>
-    
+
 ## Sub-directories
 
 By default, Oboe only converts notes in the vault root, and not those inside sub-directories. To include sub-directories, add them with the flag `-d` or `--sub-directories`. For example, say you have the folders `Daily notes` and `Zettels` that you want to have converted. In this case, run
 
     oboe <path to vault> -d "Daily notes" "Zettels"
-    
+
 ## Templates
 
 The output is not very exciting from the get-go. It needs some style and structure. This is done by using a HTML template. A template must have the formatters `{title}` and `{content}` present. Their value should be obvious. The template file is supplied to `obsidian-html` by the flag `-t` or `--template`, like this:
@@ -45,9 +45,15 @@ Note that because of the way Python does formatting, the template cannot contain
 
 ## Filtering notes by tag
 
-Oboe supports only converting notes that contain a certain tag. The filter is specified via the `-f` or `--filter` flag. For example, say you had a tag `#physics` for notes relating to physics, and the same for `#chemistry`. To convert all notes relating to both physics and chemistry, run Oboe like this:
+Oboe supports only converting notes that contain a certain tag. The filter is specified via the `-f` or `--filter` flag. For example, say you had a tag `#physics` for notes relating to physics, and the same for `#chemistry`. To convert all notes relating to physics and/or chemistry, run Oboe like this:
 
     oboe <path to vault> -f physics chemistry
+
+Filters are not strict, so Oboe will convert any notes containing any of the tags in the filter. Filters can also be negated by prefixing a tag with `.`, for example:
+
+    oboe <path to vault> -f physics .chemistry
+
+The above would convert all notes with the `#physics` tag, but exclude all notes with the `#chemistry` tag. If the filter contains only exclusions, Oboe will convert every note except those who match the exclusion.
 
 ## Other flags
 
@@ -70,7 +76,7 @@ Make a GitHub Actions workflow using the YAML below, and your vault will be publ
     on:
       push:
         branches: [ master ]
-      
+
     jobs:
       deploy:
         runs-on: ubuntu-latest
@@ -87,7 +93,7 @@ Make a GitHub Actions workflow using the YAML below, and your vault will be publ
         run: |
           python -m pip install --upgrade pip
           pip install git+https://github.com/kmaasrud/oboe.git
-          
+
       - name: Generate HTML through oboe
         run: oboe ./vault -o ./out -t ./template.html -d daily
 
