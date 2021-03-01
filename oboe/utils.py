@@ -43,7 +43,7 @@ def find_backlinks(target_note_name, all_notes):
 
 
 def find_tags(document):
-    tags = [match.group(1) for match in re.finditer(r"\s#([\p{L}_-]+)", document)]
+    tags = [match.group(1) for match in re.finditer(r"\s#([\p{L}\d_-]+)", document)]
     # Sort by length (longest first) to fix issues pertaining to tags beginning with the same word.
     tags.sort(key=lambda x: len(x), reverse=True)
 

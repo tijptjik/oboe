@@ -8,8 +8,7 @@ from oboe import GLOBAL
 
 
 class Vault:
-    def __init__(self, extra_folders=[], html_template=None, filter=[]):
-        self.filter = filter
+    def __init__(self, extra_folders=[], html_template=None, filter_list=[]):
         self.extra_folders = extra_folders
 
         # If all folders are to be added
@@ -18,6 +17,21 @@ class Vault:
             self.extra_folders = find_subdirs_recursively(GLOBAL.VAULT_ROOT)
 
         self.notes = self._find_files()
+
+        include_filter = []; exclude_filter = []
+        for elem in filter_list:
+            if elem[0] == ".":
+                exclude_filter.append(elem[1:])
+            else:
+                include_filter.append(elem)
+
+        # Filters out all notes that contain a tag in the exclude filter
+        self.notes = list(filter(lambda x: not set(exclude_filter).intersection(set(x.tags)), self.notes))
+        LOG.info(f"Filtered out notes containing tags: {exclude_filter}")
+        # If include filter is present, filters out any notes NOT containing a tag in include filter
+        if include_filter:
+            self.notes = list(filter(lambda x: set(include_filter).intersection(set(x.tags)), self.notes))
+            LOG.info(f"Filtered out notes NOT containing tags: {include_filter}")
 
         self._add_backlinks()
 
@@ -121,13 +135,14 @@ class Vault:
 
             note = Note(os.path.join(folder, md_file))
 
+            md_files.append(note)
             # Filter tags
-            if self.filter:
-                for tag in self.filter:
-                    if tag in note.tags:
-                        md_files.append(note)
-                        break
-            else:
-                md_files.append(note)
+            # if self.filter:
+            #     if set(self.filter).intersection(set(note.tags)):
+            #         md_files.append(note)
+            #         break
+            #     continue
+            # else:
+            #     md_files.append(note)
 
         return md_files

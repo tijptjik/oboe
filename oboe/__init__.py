@@ -60,7 +60,7 @@ def main():
 
     time_begin = time.time()
 
-    vault = Vault(extra_folders=args.sub_directories, html_template=args.template, filter=args.filter)
+    vault = Vault(extra_folders=args.sub_directories, html_template=args.template, filter_list=args.filter)
     vault.export_html()
 
     time_end = time.time()
