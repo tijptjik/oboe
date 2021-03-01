@@ -33,6 +33,8 @@ By default, Oboe only converts notes in the vault root, and not those inside sub
 
     oboe <path to vault> -d "Daily notes" "Zettels"
 
+If you want to include all sub-directories recursively and add every note in your vault regardless of where it is located, add the `-d` flag without any arguments.
+
 ## Templates
 
 The output is not very exciting from the get-go. It needs some style and structure. This is done by using a HTML template. A template must have the formatters `{title}` and `{content}` present. Their value should be obvious. The template file is supplied to `obsidian-html` by the flag `-t` or `--template`, like this:

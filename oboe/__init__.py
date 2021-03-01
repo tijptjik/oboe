@@ -27,8 +27,8 @@ def main():
                         help="Path to HTML template")
 
     parser.add_argument("-d", "--sub-directories",
-                        nargs="+",
-                        default=[],
+                        nargs="*",
+                        default=None,
                         help="Extra sub-directories in vault that you want included")
 
     parser.add_argument("-f", "--filter",

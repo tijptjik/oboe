@@ -10,9 +10,8 @@ from oboe import GLOBAL
 class Vault:
     def __init__(self, extra_folders=[], html_template=None, filter_list=[]):
         self.extra_folders = extra_folders
-
-        # If all folders are to be added
-        if "all" in extra_folders:
+        # If extra_folders = [], then scan all subdirectories recursively
+        if type(extra_folders) == list and not extra_folders:
             LOG.debug("Adding notes from all subdirectories recursively.")
             self.extra_folders = find_subdirs_recursively(GLOBAL.VAULT_ROOT)
 
@@ -70,10 +69,11 @@ class Vault:
         # Ensure the output directory exists, as well as all extra folders.
         if not os.path.exists(GLOBAL.OUTPUT_DIR):
             os.makedirs(GLOBAL.OUTPUT_DIR)
-        for folder in self.extra_folders:
-            out_folder = os.path.join(GLOBAL.OUTPUT_DIR, os.path.relpath(folder, GLOBAL.VAULT_ROOT))
-            if not os.path.exists(out_folder):
-                os.makedirs(out_folder)
+        if self.extra_folders:
+            for folder in self.extra_folders:
+                out_folder = os.path.join(GLOBAL.OUTPUT_DIR, os.path.relpath(folder, GLOBAL.VAULT_ROOT))
+                if not os.path.exists(out_folder):
+                    os.makedirs(out_folder)
 
         if hasattr(self, "html_template"):
             stylesheets = re.findall('<link+.*rel="stylesheet"+.*href="(.+?)"', self.html_template)
@@ -119,8 +119,9 @@ class Vault:
         # Find all markdown-files in vault root.
         md_files = self._find_files_in_dir(GLOBAL.VAULT_ROOT)
         # Find all markdown-files.
-        for folder in self.extra_folders:
-            md_files += self._find_files_in_dir(folder, is_extra_dir=True)
+        if self.extra_folders:
+            for folder in self.extra_folders:
+                md_files += self._find_files_in_dir(folder, is_extra_dir=True)
 
         LOG.info(f"Found {len(md_files)} notes!")
         return md_files
