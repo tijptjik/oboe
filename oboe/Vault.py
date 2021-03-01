@@ -16,7 +16,7 @@ class Vault:
         # If all folders are to be added
         if "all" in extra_folders:
             LOG.debug("Adding notes from all subdirectories recursively.")
-            self.extra_folders = find_subdirs_recursively(vault_root)
+            self.extra_folders = find_subdirs_recursively(GLOBAL.VAULT_ROOT)
 
         self.notes = self._find_files()
 
@@ -32,7 +32,7 @@ class Vault:
                 LOG.error(f"Cannot find a template at path \"{self.html_template_path}\", aborting.")
                 sys.exit()
 
-        LOG.info(f"Created Vault object with root \"{os.path.abspath(vault_root)}\"")
+        LOG.info(f"Created Vault object with root \"{os.path.abspath(GLOBAL.VAULT_ROOT)}\"")
 
 
     def _add_backlinks(self):
@@ -58,8 +58,9 @@ class Vault:
         if not os.path.exists(out_dir):
             os.makedirs(out_dir)
         for folder in self.extra_folders:
-            if not os.path.exists(os.path.join(out_dir, folder)):
-                os.makedirs(os.path.join(out_dir, folder))
+            out_folder = os.path.join(GLOBAL.OUTPUT_DIR, os.path.relpath(folder, GLOBAL.VAULT_ROOT))
+            if not os.path.exists(out_folder):
+                os.makedirs(out_folder)
 
         if hasattr(self, "html_template"):
             stylesheets = re.findall('<link+.*rel="stylesheet"+.*href="(.+?)"', self.html_template)
@@ -82,17 +83,12 @@ class Vault:
                 LOG.debug(f"Formatting {note.title} according to the supplied HTML template...")
 
                 html = self.html_template.format(title=note.title, content=note.html(), backlinks=note.backlink_html)
-                # If the file has a rel_dir (i.e. is in a different folder than root), we need to adjust the stylesheet path
-                if note.rel_dir:
-                    for sh in GLOBAL.STYLESHEETS:
-                        sch_string = 'href="' + sh + '">'
-                        sh_relpath = os.path.join(os.path.relpath(GLOBAL.OUTPUT_DIR, note.savepath), sh)
-                        replace_string = 'href="' + sh_relpath + '">'
-                        html = html.replace(sch_string, replace_string)
+                # If we have copied stylesheet, make sure the paths are correct for each subdirectory
+                for stylesheet in GLOBAL.STYLESHEETS:
+                    relative_path = os.path.join(os.path.relpath(GLOBAL.OUTPUT_DIR, os.path.dirname(note.out_path)), stylesheet)
+                    html = html.replace(f"href=\"{stylesheet}\"", f"href=\"{relative_path}\"")
 
-
-                savepath = os.path.join(out_dir,note.savepath)
-                write(html, savepath)
+                write(html, note.out_path)
 
                 LOG.debug(f"{note.title} written.")
         else:
@@ -101,14 +97,14 @@ class Vault:
                 LOG.debug(f"Exporting {note.title} without using a template.")
 
                 html = "{content}\n{backlinks}".format(content=note.html(), backlinks=note.backlink_html)
-                write(html, os.path.join(out_dir, note.filename_html))
+                write(html, note.out_path)
 
                 LOG.debug(f"{note.title} written.")
 
 
     def _find_files(self):
         # Find all markdown-files in vault root.
-        md_files = self._find_files_in_dir(self.vault_root)
+        md_files = self._find_files_in_dir(GLOBAL.VAULT_ROOT)
         # Find all markdown-files.
         for folder in self.extra_folders:
             md_files += self._find_files_in_dir(folder, is_extra_dir=True)
@@ -124,7 +120,7 @@ class Vault:
             if not (md_file.endswith(".md") and os.path.isfile(os.path.join(folder, md_file))):
                 continue
 
-            note = Note(os.path.join(folder, md_file), is_extra_dir=is_extra_dir, rel_dir=folder[len(self.vault_root)+1:]) #+1 removes the first / in the path, allowing os.path.join to work
+            note = Note(os.path.join(folder, md_file))
 
             # Filter tags
             if self.filter:
