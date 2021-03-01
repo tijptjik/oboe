@@ -1,6 +1,8 @@
 import regex as re
 from oboe.utils import slug_case, md_link
 from oboe import LOG
+import os
+from oboe import GLOBAL
 
 LINK_SYNTAX = {
     "#": "header",
@@ -9,26 +11,37 @@ LINK_SYNTAX = {
 }
 
 class Link:
-    def __init__(self, obsidian_link, embed=None):
-        self.obsidian_link = obsidian_link
-        extended_link = re.match(r"([^#|^\n]+)([#|]\^?)(.*)", obsidian_link)
+    def __init__(self, text, embed=None):
+        self.obsidian_link = text
+        extended_link = re.match(r"([^#|^\n]+)([#|]\^?)(.*)", text)
+
         if extended_link:
-            self.file = extended_link.group(1)
+            # Is extended link, set attribute corresponding to the correct link type
+            self.path = os.path.join(*extended_link.group(1).split("/")) # Ensures correct path separators
             setattr(self, LINK_SYNTAX[extended_link.group(2)], extended_link.group(3))
+            LOG.debug(f"Link(\"{text}\") is extended. self.path: {self.path}")
         else:
-            self.file = obsidian_link
-            
+            # Is regular link, just set path
+            self.path = os.path.join(*text.split("/")) # Ensures correct path separators
+            LOG.debug(f"Link(\"{text}\") is not extended. self.path: {self.path}")
+
+        if not os.path.isfile(os.path.join(GLOBAL.VAULT_ROOT, self.path + ".md")):
+            LOG.debug("Link not absolute, trying relative...")
+
         if embed:
             # Is embed, run function to get the content of the link destination
             self.content = self.get_content()
-        
-        self.slug = slug_case(self.file)
-        
+
+        self.slug = slug_case(self.path)
+
+
     def get_content(self):
         """Gets the content residing at the link destination"""
         pass
-        
+
     def md_link(self):
+        # if self.slugpath:
+        #     self.slug = self.slugpath
         """Returns a link string that follows the Markdown specification"""
         if hasattr(self, "alias"):
             alias = getattr(self, "alias")
@@ -38,9 +51,9 @@ class Link:
             return md_link(header, f"{self.slug}#{slug_case(header)}")
         elif hasattr(self, "blockref"):
             blockref = getattr(self, "blockref")
-            return md_link(self.file, f"{self.slug}#{blockref}")
+            return md_link(self.path, f"{self.slug}#{blockref}")
         else:
-            return md_link(self.file, self.slug)
-        
+            return md_link(self.path, self.slug)
+
     def __eq__(self, other):
-        return self.file == other.file
+        return self.path == other.path
