@@ -8,8 +8,7 @@ from oboe import GLOBAL
 
 
 class Vault:
-    def __init__(self, vault_root, extra_folders=[], html_template=None, filter=[]):
-        self.vault_root = vault_root
+    def __init__(self, extra_folders=[], html_template=None, filter=[]):
         self.filter = filter
         self.extra_folders = extra_folders
 
@@ -53,10 +52,10 @@ class Vault:
                 self.notes[i].backlink_html = render_markdown(self.notes[i].backlink_html)
 
 
-    def export_html(self, out_dir):
-        # Ensure out_dir exists, as well as all extra folders.
-        if not os.path.exists(out_dir):
-            os.makedirs(out_dir)
+    def export_html(self):
+        # Ensure the output directory exists, as well as all extra folders.
+        if not os.path.exists(GLOBAL.OUTPUT_DIR):
+            os.makedirs(GLOBAL.OUTPUT_DIR)
         for folder in self.extra_folders:
             out_folder = os.path.join(GLOBAL.OUTPUT_DIR, os.path.relpath(folder, GLOBAL.VAULT_ROOT))
             if not os.path.exists(out_folder):
@@ -67,14 +66,14 @@ class Vault:
             for stylesheet in stylesheets:
                 # Check if template contains reference to a stylesheet
                 stylesheet_abspath = os.path.join(os.path.dirname(self.html_template_path), stylesheet)
-                # Check if the referenced stylesheet is local, and copy it to out_dir if it is
+                # Check if the referenced stylesheet is local, and copy it to the output directory if it is
                 if os.path.isfile(stylesheet_abspath):
                     GLOBAL.STYLESHEETS.append(stylesheet)
                     LOG.info("Copying stylesheet to the output directory...")
 
                     with open(stylesheet_abspath, encoding="utf-8") as f:
                         stylesheet_content = f.read()
-                    write(stylesheet_content, os.path.join(out_dir, stylesheet))
+                    write(stylesheet_content, os.path.join(GLOBAL.OUTPUT_DIR, stylesheet))
 
                     LOG.info("Copied local stylesheet into the output directory.")
 
