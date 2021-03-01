@@ -14,8 +14,8 @@ def slug_case(text):
     return re.sub(r'[-\s]+', '-', text).strip('-_')
 
 
-def md_link(text, link):
-    return "[" + text + "](" + link + (".html" if GLOBAL.HTML_LINK_EXTENSIONS else "") + ")"
+def md_link(text, link, extended=""):
+    return f"[{text}]({link}{('.html' if GLOBAL.HTML_LINK_EXTENSIONS else '')}{extended})"
 
 
 def extract_links_from_file(document):

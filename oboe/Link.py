@@ -48,10 +48,10 @@ class Link:
             return md_link(alias, self.slug)
         elif hasattr(self, "header"):
             header = getattr(self, "header")
-            return md_link(header, f"{self.slug}#{slug_case(header)}")
+            return md_link(header, f"{self.slug}", extended=f"#{slug_case(header)}")
         elif hasattr(self, "blockref"):
             blockref = getattr(self, "blockref")
-            return md_link(self.path, f"{self.slug}#{blockref}")
+            return md_link(self.path, f"{self.slug}", extended=f"#{blockref}")
         else:
             return md_link(self.path, self.slug)
 
