@@ -46,13 +46,21 @@ def find_tags(document):
     tags = [match.group(1) for match in re.finditer(r"\s#([\p{L}_-]+)", document)]
     # Sort by length (longest first) to fix issues pertaining to tags beginning with the same word.
     tags.sort(key=lambda x: len(x), reverse=True)
-    
+
     return tags
 
 
 def write(text, file):
     with open(file, "w", encoding="utf8") as f:
         f.write(text)
+
+
+def find_subdirs_recursively(root):
+    subfolders = [f.path for f in os.scandir(root) if f.is_dir() and "." not in f.path]
+    for dirname in subfolders:
+        subfolders.extend(find_subdirs_recursively(dirname))
+
+    return subfolders
 
 
 def render_markdown(text):
