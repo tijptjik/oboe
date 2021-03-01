@@ -35,11 +35,11 @@ def main():
                         nargs="+",
                         default=[],
                         help="Filter notes by tags")
-    
+
     parser.add_argument("-e", "--add-file-extensions",
                         action="store_true",
                         help="Whether to include a '.html' extension on links. Useful for viewing locally.")
-    
+
     parser.add_argument("-l", "--log-level",
                         default=None,
                         help="The level of Oboe's logger")
@@ -47,7 +47,7 @@ def main():
     parser.add_argument("-b", "--omit-backlink-dash",
                         action="store_false",
                         help="Whether to remove a '- ' before each backlink in html.")
-    
+
     parser.add_argument("--use-oboe-processor",
                         action="store_true", help="Whether to use Oboe's own Markdown processor")
 
@@ -58,10 +58,14 @@ def main():
 
     GLOBAL.HTML_LINK_EXTENSIONS = args.add_file_extensions
     GLOBAL.BACKLINK_DASH = args.omit_backlink_dash
+    GLOBAL.VAULT_ROOT = args.Vault
+    GLOBAL.OUTPUT_DIR = args.output_directory
 
     time_begin = time.time()
-    vault = Vault(args.Vault, extra_folders=args.sub_directories, html_template=args.template, filter=args.filter, use_oboe_processor=args.use_oboe_processor)
-    vault.export_html(args.output_directory)
+
+    vault = Vault(extra_folders=args.sub_directories, html_template=args.template, filter=args.filter, use_oboe_processor=args.use_oboe_processor)
+    vault.export_html()
+
     time_end = time.time()
-    
+
     LOG.debug(f"Oboe used {round(time_end - time_begin, 2)}s to finish.")
