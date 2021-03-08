@@ -32,7 +32,7 @@ class Link:
             # Is embed, run function to get the content of the link destination
             self.content = self.get_content()
 
-        self.slug = slug_case(self.path)
+        self.slug = "/".join(list(map(lambda x: slug_case(x), text.split("/"))))
 
 
     def get_content(self):
