@@ -37,7 +37,7 @@ If you want to include all sub-directories recursively and add every note in you
 
 ## Templates
 
-The output is not very exciting from the get-go. It needs some style and structure. This is done by using a HTML template. A template must have the formatters `{title}` and `{content}` present. Their value should be obvious. The template file is supplied to `obsidian-html` by the flag `-t` or `--template`, like this:
+The output is not very exciting from the get-go. It needs some style and structure. This is done by using a HTML template. A template must have the formatters `{title}` and `{content}` present. Their value should be obvious. The template file is supplied to `oboe` by the flag `-t` or `--template`, like this:
 
     oboe <path to vault> -t template.html
 
